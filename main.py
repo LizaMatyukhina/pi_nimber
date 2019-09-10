@@ -13,6 +13,8 @@ class Sequence(Process):
         super().__init__()
         self.main = requests.get(url)
         self.main = self.main.text
+        self.now = 0
+        self.end = 0
 
         with open('dates.txt', 'r') as f_in:
             self.birth = f_in.readlines()
@@ -30,12 +32,16 @@ class Sequence(Process):
             line = line.strip()
             if line in self.pi:
                 in_ += 1
-            else:
-                out_ += 1
 
         print('There are', in_, 'birthdays in number Pi')
+        self.end = time.time()
+        print('Time for sequential execution: ',
+              round(self.end - self.now, 5),
+              'sec.', '\n')
+
 
     def run(self):
+        self.now = time.time()
         self.word_processing()
         self.main_()
 
@@ -45,6 +51,8 @@ class Queues(Sequence):
     def __init__(self):
         super().__init__()
         self.in_ = 0
+        self.now = 0
+        self.end = 0
 
     def quest(self, q):
         while True:
@@ -58,6 +66,7 @@ class Queues(Sequence):
         return self.in_
 
     def run(self):
+        self.now = time.time()
         self.word_processing()
 
         q = Queue()
@@ -74,6 +83,11 @@ class Queues(Sequence):
 
             for future in as_completed(results):
                 print('There are', future.result(), 'birthdays in number Pi')
+                self.end = time.time()
+                print('Time for queue: ',
+                      round(self.end - self.now, 5),
+                      'sec.', '\n')
+
 
 
 class Block(Sequence):
@@ -81,6 +95,8 @@ class Block(Sequence):
     def __init__(self):
         super().__init__()
         self._in = 0
+        self.now = 0
+        self.end = 0
 
     def main_(self):
         lock = threading.RLock()
@@ -96,6 +112,7 @@ class Block(Sequence):
         return self._in
 
     def run(self):
+        self.now = time.time()
         self.word_processing()
 
         with ThreadPoolExecutor(max_workers=3) as pool:
@@ -103,29 +120,16 @@ class Block(Sequence):
 
             for future in as_completed(results):
                 print('There are', future.result(), 'birthdays in number Pi')
+                self.end = time.time()
+                print('Time for execution with block: ',
+                      round(self.end - self.now, 5),
+                      'sec.', '\n')
 
 
 if __name__ == '__main__':
-    time_now = time.time()
-    proc = Sequence()
-    proc.start()
-    proc.join()
-    print('Time for sequential execution: ',
-          round(time.time() - time_now, 5),
-          'sec.', '\n')
-
-    time_now = time.time()
-    proc = Queues()
-    proc.start()
-    proc.join()
-    print('Time for queue: ',
-          round(time.time() - time_now, 5),
-          'sec.', '\n')
-
-    time_now = time.time()
-    proc = Block()
-    proc.start()
-    proc.join()
-    print('Time for execution with block: ',
-          round(time.time() - time_now, 5),
-          'sec.', '\n')
+    proc1 = Sequence()
+    proc2 = Queues()
+    proc3 = Block()
+    proc1.start()
+    proc2.start()
+    proc3.start()
